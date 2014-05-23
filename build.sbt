@@ -1,3 +1,5 @@
+import scalariform.formatter.preferences._
+
 resolvers ++= Seq(
   "Sonatype OSS Releases"  at "http://oss.sonatype.org/content/repositories/releases/",
   "Sonatype OSS Snapshots" at "http://oss.sonatype.org/content/repositories/snapshots/"
@@ -14,3 +16,12 @@ scalaVersion := "2.10.3"
 libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % "2.0.0" cross CrossVersion.full
 )
+
+scalacOptions ++= Seq("-feature")
+
+scalariformSettings
+
+ScalariformKeys.preferences := ScalariformKeys.preferences.value
+  .setPreference(AlignSingleLineCaseStatements, true)
+  .setPreference(AlignParameters, true)
+  .setPreference(RewriteArrowSymbols, true)
