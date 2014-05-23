@@ -28,6 +28,10 @@ object CsVeer {
     override def toString = "Float"
   }
 
+  case class CsvBoolean(override val value: Boolean) extends CsvValue[Boolean](value) {
+    override def toString = "Boolean"
+  }
+
   object Int {
     def unapply(s : String) : Option[Int] = try {
       val Pat = "([0-9]+)\\.0+$".r
@@ -46,6 +50,24 @@ object CsVeer {
       s match {
         case Pat(a) => Some(a.toLong)
         case _ => Some(s.toLong)
+      }
+    } catch {
+      case _ : java.lang.NumberFormatException => None
+    }
+  }
+
+  object Boolean {
+    def unapply(s : String) : Option[Boolean] = try {
+      val Trueish = "^([1-9][0-9]*)|([1-9][0-9]*\\.0+)|(true)|(TRUE)$".r
+      val Falseish = "^(0)|(0\\.0+)|(false)|(FALSE)$".r
+      Trueish.findFirstIn(s) match {
+        case Some(_) => Some(true)
+        case None => {
+          Falseish.findFirstIn(s) match {
+            case Some(_) => Some(false)
+            case None => None
+          }
+        }
       }
     } catch {
       case _ : java.lang.NumberFormatException => None
@@ -80,6 +102,12 @@ object CsVeer {
           case _ => CsvString(s)
         }
       }
+      case "Boolean" => {
+        s match {
+          case Boolean(a) => CsvBoolean(a)
+          case _ => CsvString(s)
+        }
+      }
       case _ => CsvString(s)
     }
   }
@@ -102,33 +130,34 @@ object CsVeer {
     x.map(_.tupled)
   }
 
-  def doAll[V <: HList, X <: HList](data: String)(implicit fl: shapeless.ops.traversable.FromTraversable[V], mapper: shapeless.ops.hlist.Mapper[choose.type,V], tupler: shapeless.ops.hlist.Tupler[X], fake: V) = {
-    val innerData = rowString(data, fake.toList.map(_.toString).mkString(","))
+  def doAll[V <: HList, X <: HList](data: String, schema : String)(implicit fl: shapeless.ops.traversable.FromTraversable[V], mapper: shapeless.ops.hlist.Mapper[choose.type,V], tupler: shapeless.ops.hlist.Tupler[X]) = {
+    val innerData = rowString(data, schema)
     // This is bad. This is a cast so it is not verifiable by the compiler.
     tp((validate[V](innerData).asInstanceOf[Option[X]]))
   }
 
-  // Yeah there must be a better way to do this
-  // Macros?
+  trait Rules {
+    type Row <: HList
+    type RowRaw <: HList
 
-  // implicit val r1i =  CsvInt(0) :: HNil
-  // implicit val r1l =  CsvLong(0) :: HNil
-  // implicit val r1f =  CsvFloat(0) :: HNil
-  // implicit val r1s =  CsvString("") :: HNil
-  // implicit val r2ii =  CsvInt(0) :: CsvInt(0) :: HNil
-  // implicit val r2il =  CsvInt(0) :: CsvLong(0) :: HNil
-  // implicit val r2if =  CsvInt(0) :: CsvFloat(0) :: HNil
-  // implicit val r2is =  CsvInt(0) :: CsvString("") :: HNil
-  // implicit val r2li =  CsvLong(0) :: CsvInt(0) :: HNil
-  // implicit val r2ll =  CsvLong(0) :: CsvLong(0) :: HNil
-  // implicit val r2lf =  CsvLong(0) :: CsvFloat(0) :: HNil
-  // implicit val r2ls =  CsvLong(0) :: CsvString("") :: HNil
-  // implicit val r2fi =  CsvFloat(0) :: CsvInt(0) :: HNil
-  // implicit val r2fl =  CsvFloat(0) :: CsvLong(0) :: HNil
-  // implicit val r2ff =  CsvFloat(0) :: CsvFloat(0) :: HNil
-  // implicit val r2fs =  CsvFloat(0) :: CsvString("") :: HNil
-  // implicit val r2si =  CsvString("0") :: CsvInt(0) :: HNil
-  // implicit val r2sl =  CsvString("0") :: CsvLong(0) :: HNil
-  // implicit val r2sf =  CsvString("0") :: CsvFloat(0) :: HNil
-  // implicit val r2ss =  CsvString("0") :: CsvString("") :: HNil
+    val fake: Row
+
+    final lazy val schema = fake.toList.map(_.toString).mkString(",")
+
+    def run(data: String)(implicit fl: shapeless.ops.traversable.FromTraversable[Row], mapper: shapeless.ops.hlist.Mapper[choose.type,Row], tupler: shapeless.ops.hlist.Tupler[RowRaw]) = doAll[Row, RowRaw](data, schema)
+
+  }
+
+  trait NiaveMemoRules extends Rules {
+
+    var cache: scala.collection.mutable.Map[String, Option[RowRaw]] = scala.collection.mutable.Map empty
+
+    def runCached(data: String)(implicit fl: shapeless.ops.traversable.FromTraversable[Row], mapper: shapeless.ops.hlist.Mapper[choose.type,Row], tupler: shapeless.ops.hlist.Tupler[NiaveMemoRules.this.RowRaw]) = {
+      tp[RowRaw](cache.getOrElseUpdate(data, {
+        val innerData = rowString(data, schema)
+        validate[Row](innerData).asInstanceOf[Option[RowRaw]]
+      }))
+    }
+
+  }
 }
