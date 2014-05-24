@@ -14,7 +14,8 @@ version := "0.1-SNAPSHOT"
 scalaVersion := "2.10.3"
 
 libraryDependencies ++= Seq(
-  "com.chuusai" %% "shapeless" % "2.0.0" cross CrossVersion.full
+  "com.chuusai" %% "shapeless" % "2.0.0" cross CrossVersion.full,
+  "org.scalatest" % "scalatest_2.10" % "2.1.5" % "test"
 )
 
 scalacOptions ++= Seq("-feature")

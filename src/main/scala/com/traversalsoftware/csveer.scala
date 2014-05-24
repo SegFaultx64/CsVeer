@@ -37,27 +37,26 @@ object CsVeer {
     implicit def caseA[T, S <% CsvValue[T]] = at[S] { s ⇒ s.value }
   }
 
-  def validate[V <: HList](data: List[CsvValue[_]])(implicit fl: shapeless.ops.traversable.FromTraversable[V], mapper: shapeless.ops.hlist.Mapper[choose.type, V]) = {
-    (data.toHList[V]).map(_.map(choose))
+  def validate[V <: HList](data: List[CsvValue[_]])(implicit fl: shapeless.ops.traversable.FromTraversable[V]) = {
+    data.map(choose(_)).toHList[V]
   }
 
   def tp[V <: HList](x: Option[V])(implicit tupler: shapeless.ops.hlist.Tupler[V]) = {
     x.map(_.tupled)
   }
 
-  def doAll[V <: HList, X <: HList](data: String, parseSettings: ParseSettings)(implicit fl: shapeless.ops.traversable.FromTraversable[V], mapper: shapeless.ops.hlist.Mapper[choose.type, V], tupler: shapeless.ops.hlist.Tupler[X]) = {
+  def doAll[X <: HList](data: String, parseSettings: ParseSettings)(implicit fl: shapeless.ops.traversable.FromTraversable[X], tupler: shapeless.ops.hlist.Tupler[X]) = {
     val innerData = rowString(data, parseSettings)
     // This is bad. This is a cast so it is not verifiable by the compiler.
-    tp((validate[V](innerData).asInstanceOf[Option[X]]))
+    tp((validate[X](innerData).asInstanceOf[Option[X]]))
   }
 
   trait Rules {
     type Row <: HList
-    type RowRaw <: HList
 
     val fake: Row
 
-    final lazy val schemaComputed = fake.toList.map(_.toString)
+    final lazy val schemaComputed = fake.toList.map(_.getClass.getSimpleName)
     val cellSeperator = ','
 
     object parseSettings extends ParseSettings {
@@ -66,20 +65,20 @@ object CsVeer {
       val rowSep = '\n'
     }
 
-    def run(data: String)(implicit fl: shapeless.ops.traversable.FromTraversable[Row], mapper: shapeless.ops.hlist.Mapper[choose.type, Row], tupler: shapeless.ops.hlist.Tupler[RowRaw]) = doAll[Row, RowRaw](data, parseSettings)
+    def run(data: String)(implicit fl: shapeless.ops.traversable.FromTraversable[Row], tupler: shapeless.ops.hlist.Tupler[Row]) = doAll[Row](data, parseSettings)
 
   }
 
-  trait NiaveMemoRules extends Rules {
+  // trait NiaveMemoRules extends Rules {
 
-    var cache: scala.collection.mutable.Map[String, Option[RowRaw]] = scala.collection.mutable.Map.empty
+  //   var cache: scala.collection.mutable.Map[String, Option[RowRaw]] = scala.collection.mutable.Map.empty
 
-    def runCached(data: String)(implicit fl: shapeless.ops.traversable.FromTraversable[Row], mapper: shapeless.ops.hlist.Mapper[choose.type, Row], tupler: shapeless.ops.hlist.Tupler[NiaveMemoRules.this.RowRaw]) = {
-      tp[RowRaw](cache.getOrElseUpdate(data, {
-        val innerData = rowString(data, parseSettings)
-        validate[Row](innerData).asInstanceOf[Option[RowRaw]]
-      }))
-    }
+  //   def runCached(data: String)(implicit fl: shapeless.ops.traversable.FromTraversable[Row], mapper: shapeless.ops.hlist.Mapper[choose.type, Row], tupler: shapeless.ops.hlist.Tupler[NiaveMemoRules.this.RowRaw]) = {
+  //     tp[RowRaw](cache.getOrElseUpdate(data, {
+  //       val innerData = rowString(data, parseSettings)
+  //       validate[Row](innerData).asInstanceOf[Option[RowRaw]]
+  //     }))
+  //   }
 
-  }
+  // }
 }

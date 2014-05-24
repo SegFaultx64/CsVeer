@@ -56,7 +56,7 @@ object Parser {
 
   def compute(s: String, t: String): CsvValue[_] = {
     t match {
-      case "Int" ⇒ {
+      case "Integer" ⇒ {
         s match {
           case Int(a) ⇒ CsvInt(a)
           case _      ⇒ CsvString(s)
@@ -84,9 +84,10 @@ object Parser {
     }
   }
 
+  val insideQuotes = "^\"([^\"]*)\"$".r
+
   def extractFromQuotes(s: String): String = {
-    val Pat = "^\"([^\"]*)\"$".r
-    val stripped = Pat.findFirstMatchIn(s)
+    val stripped = insideQuotes.findFirstMatchIn(s)
     stripped match {
       case Some(a) ⇒ { a.toString.drop(1).dropRight(1) }
       case None    ⇒ s
