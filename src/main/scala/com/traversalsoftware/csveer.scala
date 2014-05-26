@@ -9,29 +9,17 @@ import Parser._
 
 object CsVeer {
 
-  class CsvValue[T](val value: T) {
-    override def toString = "WHATEVER"
-  }
+  class CsvValue[T](val value: T)
 
-  case class CsvString(override val value: String) extends CsvValue[String](value) {
-    override def toString = "String"
-  }
+  case class CsvString(override val value: String) extends CsvValue[String](value)
 
-  case class CsvInt(override val value: Int) extends CsvValue[Int](value) {
-    override def toString = "Int"
-  }
+  case class CsvInt(override val value: Int) extends CsvValue[Int](value)
 
-  case class CsvLong(override val value: Long) extends CsvValue[Long](value) {
-    override def toString = "Long"
-  }
+  case class CsvLong(override val value: Long) extends CsvValue[Long](value)
 
-  case class CsvFloat(override val value: Float) extends CsvValue[Float](value) {
-    override def toString = "Float"
-  }
+  case class CsvFloat(override val value: Float) extends CsvValue[Float](value)
 
-  case class CsvBoolean(override val value: Boolean) extends CsvValue[Boolean](value) {
-    override def toString = "Boolean"
-  }
+  case class CsvBoolean(override val value: Boolean) extends CsvValue[Boolean](value)
 
   object choose extends Poly1 {
     implicit def caseA[T, S <% CsvValue[T]] = at[S] { s ⇒ s.value }
