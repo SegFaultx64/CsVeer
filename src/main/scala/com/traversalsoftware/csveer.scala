@@ -39,11 +39,23 @@ object CsVeer {
     tp((validate[X](innerData).asInstanceOf[Option[X]]))
   }
 
-  trait Rules {
-    type Row <: HList
+  def makeRules(list: List[String]): Rules[_] = {
+    val anyList = list.map(entry ⇒ {
+      entry match {
+        case "Integer" ⇒ 0
+        case "Long"    ⇒ 0l
+        case "Float"   ⇒ 0f
+        case "Boolean" ⇒ false
+        case "String"  ⇒ ""
+        case _         ⇒ null
+      }
+    })
+    new Rules(anyList.foldRight((HNil: HList))((elem: Any, carry: HList) ⇒ elem :: carry))
+  }
 
-    val fake: Row
+  class Rules[A <: HList](fake: A) {
 
+    type Row = A
     final lazy val schemaComputed = fake.toList.map(_.getClass.getSimpleName)
     val cellSeperator = ','
 
