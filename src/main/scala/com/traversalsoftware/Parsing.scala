@@ -54,33 +54,44 @@ object Parser {
     }
   }
 
-  def compute(s: String, t: String): CsvValue[_] = {
-    t match {
-      case "Integer" ⇒ {
-        s match {
-          case Int(a) ⇒ CsvInt(a)
-          case _      ⇒ CsvString(s)
+  class ValidPair(t: String) {
+
+    def unapply(s: String) = {
+      t match {
+        case "Integer" ⇒ {
+          s match {
+            case Int(a) ⇒ Some(CsvInt(a))
+            case _      ⇒ None
+          }
         }
-      }
-      case "Long" ⇒ {
-        s match {
-          case Long(a) ⇒ CsvLong(a)
-          case _       ⇒ CsvString(s)
+        case "Long" ⇒ {
+          s match {
+            case Long(a) ⇒ Some(CsvLong(a))
+            case _       ⇒ None
+          }
         }
-      }
-      case "Float" ⇒ {
-        s match {
-          case Float(a) ⇒ CsvFloat(a)
-          case _        ⇒ CsvString(s)
+        case "Float" ⇒ {
+          s match {
+            case Float(a) ⇒ Some(CsvFloat(a))
+            case _        ⇒ None
+          }
         }
-      }
-      case "Boolean" ⇒ {
-        s match {
-          case Boolean(a) ⇒ CsvBoolean(a)
-          case _          ⇒ CsvString(s)
+        case "Boolean" ⇒ {
+          s match {
+            case Boolean(a) ⇒ Some(CsvBoolean(a))
+            case _          ⇒ None
+          }
         }
+        case _ ⇒ Some(CsvString(s))
       }
-      case _ ⇒ CsvString(s)
+    }
+  }
+
+  def compute(s: String, t: String): Option[CsvValue[_]] = {
+    val Valid = new ValidPair(t)
+    s match {
+      case Valid(v) => Some(v)
+      case _ => None
     }
   }
 
