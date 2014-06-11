@@ -17,6 +17,7 @@ scalaVersion := "2.10.3"
 libraryDependencies ++= Seq(
   "com.chuusai" %% "shapeless" % "2.0.0" cross CrossVersion.full,
   "org.scalatest" % "scalatest_2.10" % "2.1.5" % "test",
+  "org.specs2" %%  "specs2-core"   % "2.3.7" % "test",
   "com.typesafe.play" %% "play" % "2.2.1"
 )
 

@@ -37,13 +37,17 @@ object CsVeer {
   }
 
   class Rules(schemaList: List[String]) {
-    
+
     val cellSeperator = ','
 
     object parseSettings extends ParseSettings {
       val schema = schemaList
       val cellSep = cellSeperator
       val rowSep = '\n'
+    }
+
+    def run(data: String) = {
+      Parser.rowString(data, parseSettings)
     }
 
     // def run(data: String)(implicit fl: shapeless.ops.traversable.FromTraversable[A], tupler: shapeless.ops.hlist.Tupler[A]) = doAll[A](data, parseSettings)

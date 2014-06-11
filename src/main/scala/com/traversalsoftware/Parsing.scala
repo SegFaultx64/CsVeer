@@ -90,8 +90,8 @@ object Parser {
   def compute(s: String, t: String): Option[CsvValue[_]] = {
     val Valid = new ValidPair(t)
     s match {
-      case Valid(v) => Some(v)
-      case _ => None
+      case Valid(v) ⇒ Some(v)
+      case _        ⇒ None
     }
   }
 
@@ -105,9 +105,18 @@ object Parser {
     }
   }
 
-  def rowString(s: String, p: ParseSettings): List[CsvValue[_]] = {
+  def rowString(s: String, p: ParseSettings): Option[List[CsvValue[_]]] = {
     val st: List[String] = s.split(p.cellSep).toList.map(extractFromQuotes)
-    st.zip(p.schema).map(a ⇒ compute(a._1, a._2)).toList
+    val zipped = st.zip(p.schema).map(a ⇒ compute(a._1, a._2)).toList
+    val sizeCheck = p.schema.size <= st.size
+    val check = (zipped.foldLeft(sizeCheck)((carry, elem) ⇒ {
+      carry && !(elem.isEmpty)
+    }))
+    if (check) {
+      Some(zipped.flatten)
+    } else {
+      None
+    }
   }
 
   trait ParseSettings {
