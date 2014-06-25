@@ -36,9 +36,7 @@ object CsVeer {
     def toJson = Json.toJson(value)
   }
 
-  class Rules(schemaList: List[String]) {
-
-    val cellSeperator = ','
+  class Rules(schemaList: List[String], cellSeperator: Char = ',') {
 
     object parseSettings extends ParseSettings {
       val schema = schemaList
